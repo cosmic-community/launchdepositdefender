@@ -405,14 +405,14 @@ export class PDFGenerator {
       // Value - Fix: Line 181 - Provide proper null check for getTextWidth and ensure centerX is always a number
       this.doc.setFontSize(16)
       this.doc.setTextColor(37, 99, 235)
-      const textWidth = this.doc.getTextWidth(value) ?? 0  // Fix: Ensure textWidth is never undefined
+      const textWidth = this.doc.getTextWidth(value) || 0  // Fix: Use || 0 instead of ?? 0 for consistency
       const centerX = x + boxWidth / 2 - textWidth / 2
       this.doc.text(value, centerX, this.currentY + 12)
       
       // Label - Fix: Line 258/300 - Provide proper null check for getTextWidth and ensure labelCenterX is always a number
       this.doc.setFontSize(8)
       this.doc.setTextColor(100, 100, 100)
-      const labelWidth = this.doc.getTextWidth(labelText) ?? 0  // Fix: Ensure labelWidth is never undefined
+      const labelWidth = this.doc.getTextWidth(labelText) || 0  // Fix: Use || 0 instead of ?? 0 for consistency
       const labelCenterX = x + boxWidth / 2 - labelWidth / 2
       this.doc.text(labelText, labelCenterX, this.currentY + 20)
     })
@@ -424,7 +424,7 @@ export class PDFGenerator {
   }
 
   private centeredText(text: string, y: number): void {
-    const textWidth = this.doc.getTextWidth(text) ?? 0  // Fix: Ensure textWidth is never undefined
+    const textWidth = this.doc.getTextWidth(text) || 0  // Fix: Ensure textWidth is never undefined
     const x = (this.pageWidth - textWidth) / 2
     this.doc.text(text, x, y)
   }
@@ -446,12 +446,12 @@ export class PDFGenerator {
       
       // Fix: Ensure property.address is defined and handle alignment properly
       const address = property.address ?? 'Property Address'
-      const addressWidth = this.doc.getTextWidth(address) ?? 0  // Fix: Ensure addressWidth is never undefined
+      const addressWidth = this.doc.getTextWidth(address) || 0  // Fix: Use || 0 for consistency
       const addressCenterX = this.pageWidth / 2 - addressWidth / 2
       this.doc.text(address, addressCenterX, this.pageHeight - 8)
       
       const pageText = `Page ${i} of ${totalPages}`
-      const pageTextWidth = this.doc.getTextWidth(pageText) ?? 0  // Fix: Ensure pageTextWidth is never undefined
+      const pageTextWidth = this.doc.getTextWidth(pageText) || 0  // Fix: Use || 0 for consistency
       this.doc.text(pageText, this.pageWidth - this.margin - pageTextWidth, this.pageHeight - 8)
     }
   }
