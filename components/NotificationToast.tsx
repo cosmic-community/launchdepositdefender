@@ -1,16 +1,22 @@
 'use client'
 
 import { useEffect } from 'react'
-import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react'
+import { CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react'
 import { useApp } from '@/components/Providers'
+import {
+  Toast,
+  ToastClose,
+  ToastDescription,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+} from "@/components/ui/toast"
 
 export function NotificationToast() {
   const { notifications, removeNotification } = useApp()
 
-  if (notifications.length === 0) return null
-
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <ToastProvider>
       {notifications.map((notification) => {
         const Icon = {
           success: CheckCircle,
@@ -19,45 +25,32 @@ export function NotificationToast() {
           info: Info
         }[notification.type]
 
-        const colorClasses = {
-          success: 'bg-success-50 border-success-200 text-success-800',
-          error: 'bg-danger-50 border-danger-200 text-danger-800',
-          warning: 'bg-warning-50 border-warning-200 text-warning-800',
-          info: 'bg-primary-50 border-primary-200 text-primary-800'
-        }[notification.type]
-
-        const iconColorClasses = {
-          success: 'text-success-600',
-          error: 'text-danger-600',
-          warning: 'text-warning-600',
-          info: 'text-primary-600'
-        }[notification.type]
+        const variant = notification.type === 'error' ? 'destructive' : 
+                      notification.type === 'success' ? 'success' : 'default'
 
         return (
-          <div
+          <Toast
             key={notification.id}
-            className={`max-w-sm w-full border rounded-lg p-4 shadow-lg animate-slide-up ${colorClasses}`}
+            variant={variant}
+            duration={notification.type === 'error' ? 6000 : 4000}
+            onOpenChange={(open) => {
+              if (!open) {
+                removeNotification(notification.id)
+              }
+            }}
           >
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <Icon className={`w-5 h-5 ${iconColorClasses}`} />
-              </div>
-              <div className="ml-3 flex-1">
-                <p className="text-sm font-medium">{notification.title}</p>
-                <p className="text-sm mt-1 opacity-90">{notification.message}</p>
-              </div>
-              <div className="ml-4 flex-shrink-0">
-                <button
-                  onClick={() => removeNotification(notification.id)}
-                  className="inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+            <div className="flex items-start space-x-3">
+              <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <ToastTitle>{notification.title}</ToastTitle>
+                <ToastDescription>{notification.message}</ToastDescription>
               </div>
             </div>
-          </div>
+            <ToastClose />
+          </Toast>
         )
       })}
-    </div>
+      <ToastViewport />
+    </ToastProvider>
   )
 }

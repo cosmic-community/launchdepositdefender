@@ -2,10 +2,22 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Home, User, Calendar, Mail, Phone } from 'lucide-react'
+import { Home, User, Calendar, Mail, Phone } from 'lucide-react'
 import { useApp } from '@/components/Providers'
 import { PropertyFormData, Property, Room } from '@/types'
 import { getAllRoomTypes, createRoomFromTemplate } from '@/lib/room-templates'
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter 
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Progress } from '@/components/ui/progress'
+import { Card, CardContent } from '@/components/ui/card'
 
 interface CreatePropertyModalProps {
   isOpen: boolean
@@ -28,8 +40,6 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
   })
   const [selectedRoomTypes, setSelectedRoomTypes] = useState<string[]>([])
 
-  if (!isOpen) return null
-
   const handleInputChange = (field: keyof PropertyFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
@@ -44,7 +54,6 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
 
   const handleNext = () => {
     if (step === 1) {
-      // Validate required fields
       if (!formData.address.trim() || !formData.tenantName.trim() || !formData.moveOutDate) {
         return
       }
@@ -65,7 +74,6 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
 
     setIsSubmitting(true)
     try {
-      // Create property with selected rooms
       const propertyId = `property-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       
       const rooms: Room[] = selectedRoomTypes.map(roomType => 
@@ -102,7 +110,6 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
       setStep(1)
       onClose()
 
-      // Navigate to property page
       router.push(`/property/${propertyId}`)
     } catch (error) {
       console.error('Failed to create property:', error)
@@ -119,85 +126,60 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
     { type: 'general', label: 'General Areas', icon: '🏠', description: 'Hallways, exterior, utilities' }
   ]
 
+  const progressValue = (step / 2) * 100
+
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              {step === 1 ? 'Create New Property' : 'Select Room Types'}
-            </h2>
-            <p className="text-gray-600 mt-1">
-              {step === 1 
-                ? 'Enter your property and tenant details'
-                : 'Choose which rooms you want to inspect'
-              }
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {step === 1 ? 'Create New Property' : 'Select Room Types'}
+          </DialogTitle>
+          <DialogDescription>
+            {step === 1 
+              ? 'Enter your property and tenant details'
+              : 'Choose which rooms you want to inspect'
+            }
+          </DialogDescription>
+        </DialogHeader>
 
         {/* Step Indicator */}
-        <div className="px-6 py-4 bg-gray-50">
-          <div className="flex items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-              step >= 1 ? 'bg-primary-600 text-white' : 'bg-gray-300 text-gray-600'
-            }`}>
-              1
-            </div>
-            <div className={`flex-1 h-1 mx-3 ${step >= 2 ? 'bg-primary-600' : 'bg-gray-300'}`} />
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-              step >= 2 ? 'bg-primary-600 text-white' : 'bg-gray-300 text-gray-600'
-            }`}>
-              2
-            </div>
-          </div>
-          <div className="flex justify-between mt-2 text-xs text-gray-600">
-            <span>Property Details</span>
-            <span>Room Selection</span>
+        <div className="space-y-2">
+          <Progress value={progressValue} />
+          <div className="flex justify-between text-xs text-gray-600">
+            <span className={step === 1 ? 'font-medium text-primary-600' : ''}>Property Details</span>
+            <span className={step === 2 ? 'font-medium text-primary-600' : ''}>Room Selection</span>
           </div>
         </div>
 
         {/* Step 1: Property Details */}
         {step === 1 && (
-          <div className="p-6 space-y-6">
-            {/* Property Address */}
+          <div className="space-y-6">
             <div>
               <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
                 <Home className="w-4 h-4 inline mr-2" />
                 Property Address *
               </label>
-              <input
+              <Input
                 id="address"
-                type="text"
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
                 placeholder="123 Main St, City, State 12345"
-                className="input-field"
                 required
               />
             </div>
 
-            {/* Tenant Information */}
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="tenantName" className="block text-sm font-medium text-gray-700 mb-2">
                   <User className="w-4 h-4 inline mr-2" />
                   Your Name *
                 </label>
-                <input
+                <Input
                   id="tenantName"
-                  type="text"
                   value={formData.tenantName}
                   onChange={(e) => handleInputChange('tenantName', e.target.value)}
                   placeholder="Your full name"
-                  className="input-field"
                   required
                 />
               </div>
@@ -207,35 +189,31 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
                   <Mail className="w-4 h-4 inline mr-2" />
                   Your Email
                 </label>
-                <input
+                <Input
                   id="tenantEmail"
                   type="email"
                   value={formData.tenantEmail}
                   onChange={(e) => handleInputChange('tenantEmail', e.target.value)}
                   placeholder="your.email@example.com"
-                  className="input-field"
                 />
               </div>
             </div>
 
-            {/* Move-out Date */}
             <div>
               <label htmlFor="moveOutDate" className="block text-sm font-medium text-gray-700 mb-2">
                 <Calendar className="w-4 h-4 inline mr-2" />
                 Move-out Date *
               </label>
-              <input
+              <Input
                 id="moveOutDate"
                 type="date"
                 value={formData.moveOutDate}
                 onChange={(e) => handleInputChange('moveOutDate', e.target.value)}
-                className="input-field"
                 min={new Date().toISOString().split('T')[0]}
                 required
               />
             </div>
 
-            {/* Landlord Information (Optional) */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900">
                 Landlord Information (Optional)
@@ -250,13 +228,11 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
                     <User className="w-4 h-4 inline mr-2" />
                     Name
                   </label>
-                  <input
+                  <Input
                     id="landlordName"
-                    type="text"
                     value={formData.landlordName}
                     onChange={(e) => handleInputChange('landlordName', e.target.value)}
                     placeholder="Landlord name"
-                    className="input-field"
                   />
                 </div>
 
@@ -265,13 +241,12 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
                     <Mail className="w-4 h-4 inline mr-2" />
                     Email
                   </label>
-                  <input
+                  <Input
                     id="landlordEmail"
                     type="email"
                     value={formData.landlordEmail}
                     onChange={(e) => handleInputChange('landlordEmail', e.target.value)}
                     placeholder="landlord@example.com"
-                    className="input-field"
                   />
                 </div>
 
@@ -280,13 +255,12 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
                     <Phone className="w-4 h-4 inline mr-2" />
                     Phone
                   </label>
-                  <input
+                  <Input
                     id="landlordPhone"
                     type="tel"
                     value={formData.landlordPhone}
                     onChange={(e) => handleInputChange('landlordPhone', e.target.value)}
                     placeholder="(555) 123-4567"
-                    className="input-field"
                   />
                 </div>
               </div>
@@ -296,89 +270,82 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
 
         {/* Step 2: Room Selection */}
         {step === 2 && (
-          <div className="p-6">
-            <p className="text-gray-600 mb-6">
+          <div className="space-y-6">
+            <p className="text-gray-600">
               Select the types of rooms in your property. Each room type includes a comprehensive checklist.
             </p>
 
             <div className="grid md:grid-cols-2 gap-4">
               {roomTypeOptions.map((room) => (
-                <div
+                <Card
                   key={room.type}
-                  onClick={() => toggleRoomType(room.type)}
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                  className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
                     selectedRoomTypes.includes(room.type)
-                      ? 'border-primary-500 bg-primary-50'
-                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                      ? 'ring-2 ring-primary-500 bg-primary-50'
+                      : 'hover:bg-gray-50'
                   }`}
+                  onClick={() => toggleRoomType(room.type)}
                 >
-                  <div className="flex items-start space-x-3">
-                    <div className="text-2xl">{room.icon}</div>
-                    <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">{room.label}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{room.description}</p>
-                      {selectedRoomTypes.includes(room.type) && (
-                        <div className="mt-2">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-700">
-                            Selected
-                          </span>
-                        </div>
-                      )}
+                  <CardContent className="p-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="text-2xl">{room.icon}</div>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900">{room.label}</h3>
+                        <p className="text-sm text-gray-600 mt-1">{room.description}</p>
+                        {selectedRoomTypes.includes(room.type) && (
+                          <div className="mt-2">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-700">
+                              Selected
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
 
             {selectedRoomTypes.length === 0 && (
-              <p className="text-sm text-gray-500 mt-4 text-center">
+              <p className="text-sm text-gray-500 text-center">
                 Select at least one room type to continue
               </p>
             )}
           </div>
         )}
 
-        {/* Footer */}
-        <div className="flex items-center justify-between p-6 bg-gray-50 border-t border-gray-200">
-          <div className="flex items-center space-x-4">
+        <DialogFooter className="flex items-center justify-between">
+          <div>
             {step === 2 && (
-              <button
-                onClick={handleBack}
-                className="btn-secondary"
-              >
+              <Button variant="outline" onClick={handleBack}>
                 Back
-              </button>
+              </Button>
             )}
           </div>
 
           <div className="flex items-center space-x-3">
-            <button
-              onClick={onClose}
-              className="btn-secondary"
-            >
+            <Button variant="outline" onClick={onClose}>
               Cancel
-            </button>
+            </Button>
             
             {step === 1 ? (
-              <button
+              <Button
                 onClick={handleNext}
                 disabled={!formData.address.trim() || !formData.tenantName.trim() || !formData.moveOutDate}
-                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
                 onClick={handleSubmit}
                 disabled={selectedRoomTypes.length === 0 || isSubmitting}
-                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? 'Creating...' : `Create Property (${selectedRoomTypes.length} rooms)`}
-              </button>
+              </Button>
             )}
           </div>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
