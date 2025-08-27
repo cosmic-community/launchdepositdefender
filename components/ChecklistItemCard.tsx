@@ -78,7 +78,7 @@ export function ChecklistItemCard({ item, onUpdate, onCameraCapture }: Checklist
   return (
     <div className={`card transition-all duration-200 ${
       item.completed ? 'bg-success-50 border-success-200' : 'bg-white border-gray-200'
-    } ${item.severity ? 'ring-1 ' + getSeverityColor(item.severity).split(' ')[2].replace('border-', 'ring-') : ''}`}>
+    } ${item.severity ? 'ring-1 ' + getSeverityColor(item.severity).split(' ')[2]?.replace('border-', 'ring-') : ''}`}>
       {/* Main Content */}
       <div className="flex items-start space-x-4">
         {/* Checkbox */}

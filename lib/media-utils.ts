@@ -1,3 +1,5 @@
+import { MediaFile } from '@/types'
+
 export function compressImage(file: File, maxWidth: number = 1920, quality: number = 0.8): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas')
