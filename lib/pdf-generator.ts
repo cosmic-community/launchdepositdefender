@@ -104,7 +104,8 @@ export class PDFGenerator {
       this.doc.text(label, this.margin, this.currentY)
       this.doc.setTextColor(0, 0, 0)
       // Fix: Ensure value is always a string and never undefined
-      this.doc.text(value || 'Not provided', this.margin + 35, this.currentY)
+      const displayValue = value || 'Not provided'
+      this.doc.text(displayValue, this.margin + 35, this.currentY)
       this.currentY += 6
     })
   }
@@ -136,7 +137,8 @@ export class PDFGenerator {
       this.doc.text(label, this.margin, this.currentY)
       this.doc.setTextColor(0, 0, 0)
       // Fix: Ensure value is always a string and never undefined
-      this.doc.text(value || '0', this.margin + 40, this.currentY)
+      const displayValue = value || '0'
+      this.doc.text(displayValue, this.margin + 40, this.currentY)
       this.currentY += 6
     })
     
@@ -392,17 +394,19 @@ export class PDFGenerator {
       this.doc.setFillColor(240, 240, 240)
       this.doc.roundedRect(x, this.currentY, boxWidth, 25, 3, 3, 'F')
       
-      // Value
+      // Fix: Ensure stat.value is defined and handle alignment properly
+      const value = stat.value || '0'
+      const labelText = stat.label || 'N/A'
+      
+      // Value - Fix: Remove 'as any' and use proper alignment options
       this.doc.setFontSize(16)
       this.doc.setTextColor(37, 99, 235)
-      // Fix: Add explicit alignment object for text method
-      this.doc.text(stat.value, x + boxWidth/2, this.currentY + 12, { align: 'center' } as any)
+      this.doc.text(value, x + boxWidth/2, this.currentY + 12, { align: 'center' })
       
-      // Label
+      // Label - Fix: Remove 'as any' and use proper alignment options
       this.doc.setFontSize(8)
       this.doc.setTextColor(100, 100, 100)
-      // Fix: Add explicit alignment object for text method
-      this.doc.text(stat.label, x + boxWidth/2, this.currentY + 20, { align: 'center' } as any)
+      this.doc.text(labelText, x + boxWidth/2, this.currentY + 20, { align: 'center' })
     })
   }
 
@@ -431,9 +435,11 @@ export class PDFGenerator {
       this.doc.setFontSize(8)
       this.doc.setTextColor(100, 100, 100)
       this.doc.text('DepositDefender Report', this.margin, this.pageHeight - 8)
-      // Fix: Add explicit alignment object for text method
-      this.doc.text(property.address, this.pageWidth / 2, this.pageHeight - 8, { align: 'center' } as any)
-      this.doc.text(`Page ${i} of ${totalPages}`, this.pageWidth - this.margin, this.pageHeight - 8, { align: 'right' } as any)
+      
+      // Fix: Ensure property.address is defined and handle alignment properly
+      const address = property.address || 'Property Address'
+      this.doc.text(address, this.pageWidth / 2, this.pageHeight - 8, { align: 'center' })
+      this.doc.text(`Page ${i} of ${totalPages}`, this.pageWidth - this.margin, this.pageHeight - 8, { align: 'right' })
     }
   }
 }
