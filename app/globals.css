@@ -1,0 +1,249 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-gray-200;
+  }
+  
+  body {
+    @apply bg-gray-50 text-gray-900;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 focus:ring-primary-500 focus:ring-offset-2 text-white font-medium py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 focus:ring-gray-500 focus:ring-offset-2 text-gray-900 font-medium py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2;
+  }
+  
+  .btn-danger {
+    @apply bg-danger-500 hover:bg-danger-600 focus:ring-danger-500 focus:ring-offset-2 text-white font-medium py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6;
+  }
+  
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors;
+  }
+  
+  .severity-minor {
+    @apply bg-success-50 text-success-700 border border-success-200;
+  }
+  
+  .severity-moderate {
+    @apply bg-warning-50 text-warning-700 border border-warning-200;
+  }
+  
+  .severity-major {
+    @apply bg-danger-50 text-danger-700 border border-danger-200;
+  }
+  
+  .progress-bar {
+    @apply bg-gray-200 rounded-full h-2 overflow-hidden;
+  }
+  
+  .progress-fill {
+    @apply bg-primary-600 h-full transition-all duration-300 ease-out;
+  }
+  
+  .checklist-item {
+    @apply flex items-start space-x-3 p-3 rounded-lg border transition-colors;
+  }
+  
+  .checklist-item.completed {
+    @apply bg-success-50 border-success-200;
+  }
+  
+  .checklist-item.incomplete {
+    @apply bg-white border-gray-200 hover:bg-gray-50;
+  }
+  
+  .camera-preview {
+    @apply w-full h-64 object-cover rounded-lg border-2 border-dashed border-gray-300;
+  }
+  
+  .media-thumbnail {
+    @apply w-16 h-16 object-cover rounded-lg border border-gray-200;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .glass {
+    @apply backdrop-blur-md bg-white/80 border border-white/20;
+  }
+  
+  .gradient-primary {
+    background: linear-gradient(135deg, theme(colors.primary.600) 0%, theme(colors.primary.700) 100%);
+  }
+  
+  .gradient-success {
+    background: linear-gradient(135deg, theme(colors.success.500) 0%, theme(colors.success.600) 100%);
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-bounce-in {
+    animation: bounceIn 0.6s ease-out forwards;
+  }
+  
+  @keyframes bounceIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+    70% {
+      transform: scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+/* Custom scrollbar for webkit browsers */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: theme(colors.gray.100);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: theme(colors.gray.300);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: theme(colors.gray.400);
+}
+
+/* Print styles for reports */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-break {
+    page-break-before: always;
+  }
+  
+  body {
+    @apply bg-white text-black;
+  }
+  
+  .card {
+    @apply border border-gray-300 shadow-none;
+  }
+}
+
+/* PWA specific styles */
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .pwa-header {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 640px) {
+  .mobile-optimized {
+    @apply text-base leading-relaxed;
+  }
+  
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .mobile-padding {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
+  .dark-mode-auto {
+    @apply bg-gray-900 text-gray-100;
+  }
+  
+  .dark-mode-auto .card {
+    @apply bg-gray-800 border-gray-700;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .btn-primary {
+    @apply border-2 border-primary-900;
+  }
+  
+  .card {
+    @apply border-2 border-gray-900;
+  }
+}
+
+/* Focus visible for better accessibility */
+.focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary-600;
+}
