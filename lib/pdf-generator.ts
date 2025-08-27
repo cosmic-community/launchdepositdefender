@@ -101,11 +101,11 @@ export class PDFGenerator {
     this.doc.setFontSize(10)
     info.forEach(([label, value]) => {
       this.doc.setTextColor(100, 100, 100)
-      // Fix: Ensure label is always a string and never undefined
+      // Ensure label is always a string and never undefined
       const displayLabel = label || ''
       this.doc.text(displayLabel, this.margin, this.currentY)
       this.doc.setTextColor(0, 0, 0)
-      // Fix: Ensure value is always a string and never undefined
+      // Ensure value is always a string and never undefined
       const displayValue = value || 'Not provided'
       this.doc.text(displayValue, this.margin + 35, this.currentY)
       this.currentY += 6
@@ -136,11 +136,11 @@ export class PDFGenerator {
     this.doc.setFontSize(10)
     summaryData.forEach(([label, value]) => {
       this.doc.setTextColor(100, 100, 100)
-      // Fix: Ensure label is always a string and never undefined
+      // Ensure label is always a string and never undefined
       const displayLabel = label || ''
       this.doc.text(displayLabel, this.margin, this.currentY)
       this.doc.setTextColor(0, 0, 0)
-      // Fix: Ensure value is always a string and never undefined
+      // Ensure value is always a string and never undefined
       const displayValue = value || '0'
       this.doc.text(displayValue, this.margin + 40, this.currentY)
       this.currentY += 6
@@ -192,10 +192,9 @@ export class PDFGenerator {
     this.doc.text(room.name, this.margin, this.currentY)
     this.currentY += 15
     
-    // Room progress
+    // Room progress - Add explicit undefined checks and default to 0
     this.doc.setFontSize(10)
     this.doc.setTextColor(100, 100, 100)
-    // Fix: Add explicit undefined checks and default to 0
     const progressPercentage = room.progressPercentage ?? 0
     const completedItems = room.completedItems ?? 0
     const totalItems = room.totalItems ?? 0
@@ -398,21 +397,21 @@ export class PDFGenerator {
       this.doc.setFillColor(240, 240, 240)
       this.doc.roundedRect(x, this.currentY, boxWidth, 25, 3, 3, 'F')
       
-      // Fix: Ensure stat.value and stat.label are defined and handle alignment properly
+      // Ensure stat.value and stat.label are defined and handle alignment properly
       const value = stat.value ?? '0'
       const labelText = stat.label ?? 'N/A'
       
       // Value - Fix: Line 181 - Provide proper null check for getTextWidth and ensure centerX is always a number
       this.doc.setFontSize(16)
       this.doc.setTextColor(37, 99, 235)
-      const textWidth = this.doc.getTextWidth(value) || 0  // Fix: Handle undefined getTextWidth return with default 0
+      const textWidth = this.doc.getTextWidth(value) ?? 0  // Fix: Handle undefined getTextWidth return with default 0
       const centerX = x + boxWidth / 2 - textWidth / 2
       this.doc.text(value, centerX, this.currentY + 12)
       
       // Label - Fix: Line 258/300 - Provide proper null check for getTextWidth and ensure labelCenterX is always a number
       this.doc.setFontSize(8)
       this.doc.setTextColor(100, 100, 100)
-      const labelWidth = this.doc.getTextWidth(labelText) || 0  // Fix: Handle undefined getTextWidth return with default 0
+      const labelWidth = this.doc.getTextWidth(labelText) ?? 0  // Fix: Handle undefined getTextWidth return with default 0
       const labelCenterX = x + boxWidth / 2 - labelWidth / 2
       this.doc.text(labelText, labelCenterX, this.currentY + 20)
     })
@@ -424,7 +423,7 @@ export class PDFGenerator {
   }
 
   private centeredText(text: string, y: number): void {
-    const textWidth = this.doc.getTextWidth(text) || 0  // Fix: Ensure textWidth is never undefined, default to 0
+    const textWidth = this.doc.getTextWidth(text) ?? 0  // Fix: Ensure textWidth is never undefined, default to 0
     const x = (this.pageWidth - textWidth) / 2
     this.doc.text(text, x, y)
   }
@@ -444,14 +443,14 @@ export class PDFGenerator {
       this.doc.setTextColor(100, 100, 100)
       this.doc.text('DepositDefender Report', this.margin, this.pageHeight - 8)
       
-      // Fix: Ensure property.address is defined and handle alignment properly
+      // Ensure property.address is defined and handle alignment properly
       const address = property.address ?? 'Property Address'
-      const addressWidth = this.doc.getTextWidth(address) || 0  // Fix: Handle undefined getTextWidth return with default 0
+      const addressWidth = this.doc.getTextWidth(address) ?? 0  // Fix: Handle undefined getTextWidth return with default 0
       const addressCenterX = this.pageWidth / 2 - addressWidth / 2
       this.doc.text(address, addressCenterX, this.pageHeight - 8)
       
       const pageText = `Page ${i} of ${totalPages}`
-      const pageTextWidth = this.doc.getTextWidth(pageText) || 0  // Fix: Handle undefined getTextWidth return with default 0
+      const pageTextWidth = this.doc.getTextWidth(pageText) ?? 0  // Fix: Handle undefined getTextWidth return with default 0
       this.doc.text(pageText, this.pageWidth - this.margin - pageTextWidth, this.pageHeight - 8)
     }
   }
