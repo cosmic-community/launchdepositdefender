@@ -9,6 +9,7 @@ interface AppContextType {
   currentProperty: Property | null
   notifications: AppNotification[]
   loading: boolean
+  isLoading: boolean // Added missing property
   setCurrentProperty: (property: Property | null) => void
   addNotification: (notification: Omit<AppNotification, 'id'>) => void
   removeNotification: (id: string) => void
@@ -156,6 +157,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     currentProperty,
     notifications,
     loading,
+    isLoading: loading, // Provide isLoading as alias to loading
     setCurrentProperty,
     addNotification,
     removeNotification,
