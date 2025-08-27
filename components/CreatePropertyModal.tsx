@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Home, User, Calendar, Mail, Phone } from 'lucide-react'
+import { Home, User, Calendar, Mail, Phone, MapPin, Building } from 'lucide-react'
 import { useApp } from '@/components/Providers'
 import { PropertyFormData, Property, Room } from '@/types'
 import { getAllRoomTypes, createRoomFromTemplate } from '@/lib/room-templates'
@@ -30,13 +30,16 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState<PropertyFormData>({
-    address: '',
-    landlordName: '',
-    landlordEmail: '',
-    landlordPhone: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    moveInDate: '',
+    moveOutDate: '',
     tenantName: '',
-    tenantEmail: '',
-    moveOutDate: ''
+    landlordName: '',
+    initialNotes: ''
   })
   const [selectedRoomTypes, setSelectedRoomTypes] = useState<string[]>([])
 
@@ -52,11 +55,16 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
     )
   }
 
+  const isStep1Valid = () => {
+    return formData.addressLine1.trim() && 
+           formData.city.trim() && 
+           formData.state.trim() && 
+           formData.zipCode.trim() && 
+           formData.tenantName.trim()
+  }
+
   const handleNext = () => {
-    if (step === 1) {
-      if (!formData.address.trim() || !formData.tenantName.trim() || !formData.moveOutDate) {
-        return
-      }
+    if (step === 1 && isStep1Valid()) {
       setStep(2)
     }
   }
@@ -80,15 +88,30 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
         createRoomFromTemplate(roomType as any)
       )
 
+      // Build full address from components
+      const addressParts = [
+        formData.addressLine1.trim(),
+        formData.addressLine2.trim(),
+        formData.city.trim(),
+        formData.state.trim(),
+        formData.zipCode.trim()
+      ].filter(part => part.length > 0)
+      
+      const fullAddress = addressParts.join(', ')
+
       const property: Property = {
         id: propertyId,
-        address: formData.address.trim(),
-        landlordName: formData.landlordName.trim() || undefined,
-        landlordEmail: formData.landlordEmail.trim() || undefined,
-        landlordPhone: formData.landlordPhone.trim() || undefined,
+        address: fullAddress,
+        addressLine1: formData.addressLine1.trim(),
+        addressLine2: formData.addressLine2.trim() || undefined,
+        city: formData.city.trim(),
+        state: formData.state.trim(),
+        zipCode: formData.zipCode.trim(),
+        moveInDate: formData.moveInDate.trim() || undefined,
+        moveOutDate: formData.moveOutDate.trim() || undefined,
         tenantName: formData.tenantName.trim(),
-        tenantEmail: formData.tenantEmail.trim() || undefined,
-        moveOutDate: formData.moveOutDate,
+        landlordName: formData.landlordName.trim() || undefined,
+        initialNotes: formData.initialNotes.trim() || undefined,
         createdAt: new Date().toISOString(),
         rooms,
         overallProgress: 0
@@ -98,13 +121,16 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
       
       // Reset form
       setFormData({
-        address: '',
-        landlordName: '',
-        landlordEmail: '',
-        landlordPhone: '',
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        moveInDate: '',
+        moveOutDate: '',
         tenantName: '',
-        tenantEmail: '',
-        moveOutDate: ''
+        landlordName: '',
+        initialNotes: ''
       })
       setSelectedRoomTypes([])
       setStep(1)
@@ -137,7 +163,7 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
           </DialogTitle>
           <DialogDescription>
             {step === 1 
-              ? 'Enter your property and tenant details'
+              ? 'Enter your property information'
               : 'Choose which rooms you want to inspect'
             }
           </DialogDescription>
@@ -147,33 +173,124 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
         <div className="space-y-2">
           <Progress value={progressValue} />
           <div className="flex justify-between text-xs text-gray-600">
-            <span className={step === 1 ? 'font-medium text-primary-600' : ''}>Property Details</span>
+            <span className={step === 1 ? 'font-medium text-primary-600' : ''}>Property Information</span>
             <span className={step === 2 ? 'font-medium text-primary-600' : ''}>Room Selection</span>
           </div>
         </div>
 
-        {/* Step 1: Property Details */}
+        {/* Step 1: Property Information */}
         {step === 1 && (
           <div className="space-y-6">
-            <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-                <Home className="w-4 h-4 inline mr-2" />
-                Property Address *
-              </label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                placeholder="123 Main St, City, State 12345"
-                required
-              />
-            </div>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <Home className="w-5 h-5 mr-2" />
+                Property Information
+              </h3>
+              
+              {/* Address Line 1 */}
+              <div>
+                <label htmlFor="addressLine1" className="block text-sm font-medium text-gray-700 mb-2">
+                  Address Line 1 *
+                </label>
+                <Input
+                  id="addressLine1"
+                  value={formData.addressLine1}
+                  onChange={(e) => handleInputChange('addressLine1', e.target.value)}
+                  placeholder="123 Main Street"
+                  required
+                />
+              </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
+              {/* Address Line 2 */}
+              <div>
+                <label htmlFor="addressLine2" className="block text-sm font-medium text-gray-700 mb-2">
+                  Address Line 2
+                </label>
+                <Input
+                  id="addressLine2"
+                  value={formData.addressLine2}
+                  onChange={(e) => handleInputChange('addressLine2', e.target.value)}
+                  placeholder="Apt 2B, Unit 5, etc. (optional)"
+                />
+              </div>
+
+              {/* City, State, ZIP */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
+                    City *
+                  </label>
+                  <Input
+                    id="city"
+                    value={formData.city}
+                    onChange={(e) => handleInputChange('city', e.target.value)}
+                    placeholder="City"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
+                    State *
+                  </label>
+                  <Input
+                    id="state"
+                    value={formData.state}
+                    onChange={(e) => handleInputChange('state', e.target.value)}
+                    placeholder="State"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-2">
+                    ZIP Code *
+                  </label>
+                  <Input
+                    id="zipCode"
+                    value={formData.zipCode}
+                    onChange={(e) => handleInputChange('zipCode', e.target.value)}
+                    placeholder="12345"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Move Dates */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="moveInDate" className="block text-sm font-medium text-gray-700 mb-2">
+                    <Calendar className="w-4 h-4 inline mr-2" />
+                    Move-In Date
+                  </label>
+                  <Input
+                    id="moveInDate"
+                    type="date"
+                    value={formData.moveInDate}
+                    onChange={(e) => handleInputChange('moveInDate', e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="moveOutDate" className="block text-sm font-medium text-gray-700 mb-2">
+                    <Calendar className="w-4 h-4 inline mr-2" />
+                    Move-Out Date
+                  </label>
+                  <Input
+                    id="moveOutDate"
+                    type="date"
+                    value={formData.moveOutDate}
+                    onChange={(e) => handleInputChange('moveOutDate', e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+              </div>
+
+              {/* Tenant Name */}
               <div>
                 <label htmlFor="tenantName" className="block text-sm font-medium text-gray-700 mb-2">
                   <User className="w-4 h-4 inline mr-2" />
-                  Your Name *
+                  Tenant Name *
                 </label>
                 <Input
                   id="tenantName"
@@ -184,85 +301,33 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
                 />
               </div>
 
+              {/* Landlord/Management Name */}
               <div>
-                <label htmlFor="tenantEmail" className="block text-sm font-medium text-gray-700 mb-2">
-                  <Mail className="w-4 h-4 inline mr-2" />
-                  Your Email
+                <label htmlFor="landlordName" className="block text-sm font-medium text-gray-700 mb-2">
+                  <Building className="w-4 h-4 inline mr-2" />
+                  Landlord/Management Name
                 </label>
                 <Input
-                  id="tenantEmail"
-                  type="email"
-                  value={formData.tenantEmail}
-                  onChange={(e) => handleInputChange('tenantEmail', e.target.value)}
-                  placeholder="your.email@example.com"
+                  id="landlordName"
+                  value={formData.landlordName}
+                  onChange={(e) => handleInputChange('landlordName', e.target.value)}
+                  placeholder="Property manager or landlord name (optional)"
                 />
               </div>
-            </div>
 
-            <div>
-              <label htmlFor="moveOutDate" className="block text-sm font-medium text-gray-700 mb-2">
-                <Calendar className="w-4 h-4 inline mr-2" />
-                Move-out Date *
-              </label>
-              <Input
-                id="moveOutDate"
-                type="date"
-                value={formData.moveOutDate}
-                onChange={(e) => handleInputChange('moveOutDate', e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                required
-              />
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Landlord Information (Optional)
-              </h3>
-              <p className="text-sm text-gray-600">
-                This information will be included in your generated reports
-              </p>
-
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <label htmlFor="landlordName" className="block text-sm font-medium text-gray-700 mb-2">
-                    <User className="w-4 h-4 inline mr-2" />
-                    Name
-                  </label>
-                  <Input
-                    id="landlordName"
-                    value={formData.landlordName}
-                    onChange={(e) => handleInputChange('landlordName', e.target.value)}
-                    placeholder="Landlord name"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="landlordEmail" className="block text-sm font-medium text-gray-700 mb-2">
-                    <Mail className="w-4 h-4 inline mr-2" />
-                    Email
-                  </label>
-                  <Input
-                    id="landlordEmail"
-                    type="email"
-                    value={formData.landlordEmail}
-                    onChange={(e) => handleInputChange('landlordEmail', e.target.value)}
-                    placeholder="landlord@example.com"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="landlordPhone" className="block text-sm font-medium text-gray-700 mb-2">
-                    <Phone className="w-4 h-4 inline mr-2" />
-                    Phone
-                  </label>
-                  <Input
-                    id="landlordPhone"
-                    type="tel"
-                    value={formData.landlordPhone}
-                    onChange={(e) => handleInputChange('landlordPhone', e.target.value)}
-                    placeholder="(555) 123-4567"
-                  />
-                </div>
+              {/* Initial Notes */}
+              <div>
+                <label htmlFor="initialNotes" className="block text-sm font-medium text-gray-700 mb-2">
+                  Initial Notes
+                </label>
+                <textarea
+                  id="initialNotes"
+                  value={formData.initialNotes}
+                  onChange={(e) => handleInputChange('initialNotes', e.target.value)}
+                  placeholder="Any general notes about the property or move-out process..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                  rows={3}
+                />
               </div>
             </div>
           </div>
@@ -331,7 +396,7 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
             {step === 1 ? (
               <Button
                 onClick={handleNext}
-                disabled={!formData.address.trim() || !formData.tenantName.trim() || !formData.moveOutDate}
+                disabled={!isStep1Valid()}
               >
                 Next
               </Button>

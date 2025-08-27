@@ -37,12 +37,19 @@ export type RoomType = 'kitchen' | 'bathroom' | 'bedroom' | 'living-room' | 'gen
 export interface Property {
   id: string
   address: string
+  addressLine1?: string
+  addressLine2?: string
+  city?: string
+  state?: string
+  zipCode?: string
+  moveInDate?: string
+  moveOutDate?: string
   landlordName?: string
   landlordEmail?: string
   landlordPhone?: string
   tenantName: string
   tenantEmail?: string
-  moveOutDate: string
+  initialNotes?: string
   createdAt: string
   rooms: Room[]
   overallProgress: number
@@ -99,13 +106,16 @@ export interface InstallPromptEvent extends Event {
 
 // Form types
 export interface PropertyFormData {
-  address: string
-  landlordName: string
-  landlordEmail: string
-  landlordPhone: string
-  tenantName: string
-  tenantEmail: string
+  addressLine1: string
+  addressLine2: string
+  city: string
+  state: string
+  zipCode: string
+  moveInDate: string
   moveOutDate: string
+  tenantName: string
+  landlordName: string
+  initialNotes: string
 }
 
 // Storage types
