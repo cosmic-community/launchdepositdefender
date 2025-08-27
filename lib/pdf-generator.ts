@@ -103,8 +103,8 @@ export class PDFGenerator {
       this.doc.setTextColor(100, 100, 100)
       this.doc.text(label, this.margin, this.currentY)
       this.doc.setTextColor(0, 0, 0)
-      // Fix: Ensure value is always a string
-      this.doc.text(value || '', this.margin + 35, this.currentY)
+      // Fix: Ensure value is always a string and never undefined
+      this.doc.text(value || 'Not provided', this.margin + 35, this.currentY)
       this.currentY += 6
     })
   }
@@ -135,8 +135,8 @@ export class PDFGenerator {
       this.doc.setTextColor(100, 100, 100)
       this.doc.text(label, this.margin, this.currentY)
       this.doc.setTextColor(0, 0, 0)
-      // Fix: Ensure value is always a string
-      this.doc.text(value || '', this.margin + 40, this.currentY)
+      // Fix: Ensure value is always a string and never undefined
+      this.doc.text(value || '0', this.margin + 40, this.currentY)
       this.currentY += 6
     })
     
@@ -189,7 +189,7 @@ export class PDFGenerator {
     // Room progress
     this.doc.setFontSize(10)
     this.doc.setTextColor(100, 100, 100)
-    // Fix: Add explicit undefined check and default to 0
+    // Fix: Add explicit undefined checks and default to 0
     const progressPercentage = room.progressPercentage ?? 0
     const completedItems = room.completedItems ?? 0
     const totalItems = room.totalItems ?? 0
@@ -395,12 +395,14 @@ export class PDFGenerator {
       // Value
       this.doc.setFontSize(16)
       this.doc.setTextColor(37, 99, 235)
-      this.doc.text(stat.value, x + boxWidth/2, this.currentY + 12, { align: 'center' })
+      // Fix: Add explicit alignment object for text method
+      this.doc.text(stat.value, x + boxWidth/2, this.currentY + 12, { align: 'center' } as any)
       
       // Label
       this.doc.setFontSize(8)
       this.doc.setTextColor(100, 100, 100)
-      this.doc.text(stat.label, x + boxWidth/2, this.currentY + 20, { align: 'center' })
+      // Fix: Add explicit alignment object for text method
+      this.doc.text(stat.label, x + boxWidth/2, this.currentY + 20, { align: 'center' } as any)
     })
   }
 
@@ -429,8 +431,9 @@ export class PDFGenerator {
       this.doc.setFontSize(8)
       this.doc.setTextColor(100, 100, 100)
       this.doc.text('DepositDefender Report', this.margin, this.pageHeight - 8)
-      this.doc.text(property.address, this.pageWidth / 2, this.pageHeight - 8, { align: 'center' })
-      this.doc.text(`Page ${i} of ${totalPages}`, this.pageWidth - this.margin, this.pageHeight - 8, { align: 'right' })
+      // Fix: Add explicit alignment object for text method
+      this.doc.text(property.address, this.pageWidth / 2, this.pageHeight - 8, { align: 'center' } as any)
+      this.doc.text(`Page ${i} of ${totalPages}`, this.pageWidth - this.margin, this.pageHeight - 8, { align: 'right' } as any)
     }
   }
 }
