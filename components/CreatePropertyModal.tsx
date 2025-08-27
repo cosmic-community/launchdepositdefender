@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Home, User, Calendar, Mail, Phone, MapPin, Building } from 'lucide-react'
+import { Home, User, Calendar, Building } from 'lucide-react'
 import { useApp } from '@/components/Providers'
 import { PropertyFormData, Property, Room } from '@/types'
-import { getAllRoomTypes, createRoomFromTemplate } from '@/lib/room-templates'
+import { createRoomFromTemplate } from '@/lib/room-templates'
 import { 
   Dialog, 
   DialogContent, 
@@ -75,8 +75,25 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
     }
   }
 
+  const resetForm = () => {
+    setFormData({
+      addressLine1: '',
+      addressLine2: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      moveInDate: '',
+      moveOutDate: '',
+      tenantName: '',
+      landlordName: '',
+      initialNotes: ''
+    })
+    setSelectedRoomTypes([])
+    setStep(1)
+  }
+
   const handleSubmit = async () => {
-    if (selectedRoomTypes.length === 0) {
+    if (selectedRoomTypes.length === 0 || isSubmitting) {
       return
     }
 
@@ -117,26 +134,18 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
         overallProgress: 0
       }
 
+      // Save the property
       await updateProperty(property)
       
-      // Reset form
-      setFormData({
-        addressLine1: '',
-        addressLine2: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        moveInDate: '',
-        moveOutDate: '',
-        tenantName: '',
-        landlordName: '',
-        initialNotes: ''
-      })
-      setSelectedRoomTypes([])
-      setStep(1)
+      // Reset form and close modal
+      resetForm()
       onClose()
 
-      router.push(`/property/${propertyId}`)
+      // Navigate to property inspection page after a brief delay
+      // This ensures the context has updated with the new property
+      setTimeout(() => {
+        router.push(`/property/${encodeURIComponent(propertyId)}`)
+      }, 100)
     } catch (error) {
       console.error('Failed to create property:', error)
     } finally {
@@ -382,14 +391,14 @@ export function CreatePropertyModal({ isOpen, onClose }: CreatePropertyModalProp
         <DialogFooter className="flex items-center justify-between">
           <div>
             {step === 2 && (
-              <Button variant="outline" onClick={handleBack}>
+              <Button variant="outline" onClick={handleBack} disabled={isSubmitting}>
                 Back
               </Button>
             )}
           </div>
 
           <div className="flex items-center space-x-3">
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
             

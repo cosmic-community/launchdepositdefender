@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, FileText, Share, Home, CheckCircle2, Clock, AlertCircle } from 'lucide-react'
+import { ArrowLeft, FileText, Home, CheckCircle2, Clock, AlertCircle } from 'lucide-react'
 import { useApp } from '@/components/Providers'
 import { Property } from '@/types'
 import { RoomCard } from '@/components/RoomCard'
@@ -44,13 +44,27 @@ export function PropertyInspection({ propertyId }: PropertyInspectionProps) {
     if (foundProperty) {
       setProperty(foundProperty)
       setNotFound(false)
-    } else if (properties.length > 0) {
-      // Only set not found if we have loaded properties but none match
-      setNotFound(true)
+    } else if (properties.length >= 0) {
+      // Give it a moment for the context to update after property creation
+      const timeout = setTimeout(() => {
+        setNotFound(true)
+      }, 500)
+      
+      return () => clearTimeout(timeout)
     }
     
     setLoading(false)
   }, [propertyId, properties, appLoading])
+
+  // Update property when properties array changes
+  useEffect(() => {
+    if (property && properties.length > 0) {
+      const updatedProperty = properties.find(p => p.id === property.id)
+      if (updatedProperty) {
+        setProperty(updatedProperty)
+      }
+    }
+  }, [properties, property])
 
   // Show loading while app is still loading or while we're checking for property
   if (loading || appLoading) {
@@ -58,7 +72,7 @@ export function PropertyInspection({ propertyId }: PropertyInspectionProps) {
   }
 
   // Show not found only if we're sure the property doesn't exist
-  if (notFound || (!property && !appLoading && properties.length > 0)) {
+  if (notFound || (!property && !appLoading && properties.length >= 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center max-w-md mx-4">

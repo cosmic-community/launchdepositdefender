@@ -9,7 +9,7 @@ interface AppContextType {
   currentProperty: Property | null
   notifications: AppNotification[]
   loading: boolean
-  isLoading: boolean // Added missing property
+  isLoading: boolean
   setCurrentProperty: (property: Property | null) => void
   addNotification: (notification: Omit<AppNotification, 'id'>) => void
   removeNotification: (id: string) => void
@@ -74,10 +74,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
     try {
       await dbManager.saveProperty(property)
       
-      // Update local state
-      setProperties(prev => 
-        prev.map(p => p.id === property.id ? property : p)
-      )
+      // Update local state immediately
+      setProperties(prev => {
+        const existingIndex = prev.findIndex(p => p.id === property.id)
+        if (existingIndex >= 0) {
+          // Update existing property
+          const newProperties = [...prev]
+          newProperties[existingIndex] = property
+          return newProperties
+        } else {
+          // Add new property
+          return [...prev, property]
+        }
+      })
       
       // Update current property if it's the same one
       if (currentProperty?.id === property.id) {
@@ -139,7 +148,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
     setNotifications(prev => [...prev, newNotification])
 
     // Auto-remove notification after duration (unless duration is 0 for persistent)
-    // Fix: Add explicit check for duration being defined and greater than 0
     const duration = newNotification.duration
     if (duration && duration > 0) {
       setTimeout(() => {
