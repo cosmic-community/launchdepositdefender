@@ -405,14 +405,14 @@ export class PDFGenerator {
       // Value - Fix: Provide proper null check and ensure centerX is always a number
       this.doc.setFontSize(16)
       this.doc.setTextColor(37, 99, 235)
-      const textWidth = this.doc.getTextWidth(value) || 0
+      const textWidth = this.doc.getTextWidth(value) ?? 0
       const centerX = x + boxWidth / 2 - textWidth / 2
       this.doc.text(value, centerX, this.currentY + 12)
       
       // Label - Fix: Provide proper null check and ensure labelCenterX is always a number
       this.doc.setFontSize(8)
       this.doc.setTextColor(100, 100, 100)
-      const labelWidth = this.doc.getTextWidth(labelText) || 0
+      const labelWidth = this.doc.getTextWidth(labelText) ?? 0
       const labelCenterX = x + boxWidth / 2 - labelWidth / 2
       this.doc.text(labelText, labelCenterX, this.currentY + 20)
     })
@@ -424,7 +424,7 @@ export class PDFGenerator {
   }
 
   private centeredText(text: string, y: number): void {
-    const textWidth = this.doc.getTextWidth(text) || 0
+    const textWidth = this.doc.getTextWidth(text) ?? 0
     const x = (this.pageWidth - textWidth) / 2
     this.doc.text(text, x, y)
   }
@@ -446,12 +446,12 @@ export class PDFGenerator {
       
       // Fix: Ensure property.address is defined and handle alignment properly
       const address = property.address ?? 'Property Address'
-      const addressWidth = this.doc.getTextWidth(address) || 0
+      const addressWidth = this.doc.getTextWidth(address) ?? 0
       const addressCenterX = this.pageWidth / 2 - addressWidth / 2
       this.doc.text(address, addressCenterX, this.pageHeight - 8)
       
       const pageText = `Page ${i} of ${totalPages}`
-      const pageTextWidth = this.doc.getTextWidth(pageText) || 0
+      const pageTextWidth = this.doc.getTextWidth(pageText) ?? 0
       this.doc.text(pageText, this.pageWidth - this.margin - pageTextWidth, this.pageHeight - 8)
     }
   }
