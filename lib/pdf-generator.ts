@@ -101,7 +101,9 @@ export class PDFGenerator {
     this.doc.setFontSize(10)
     info.forEach(([label, value]) => {
       this.doc.setTextColor(100, 100, 100)
-      this.doc.text(label, this.margin, this.currentY)
+      // Fix: Ensure label is always a string and never undefined
+      const displayLabel = label || ''
+      this.doc.text(displayLabel, this.margin, this.currentY)
       this.doc.setTextColor(0, 0, 0)
       // Fix: Ensure value is always a string and never undefined
       const displayValue = value || 'Not provided'
@@ -134,7 +136,9 @@ export class PDFGenerator {
     this.doc.setFontSize(10)
     summaryData.forEach(([label, value]) => {
       this.doc.setTextColor(100, 100, 100)
-      this.doc.text(label, this.margin, this.currentY)
+      // Fix: Ensure label is always a string and never undefined
+      const displayLabel = label || ''
+      this.doc.text(displayLabel, this.margin, this.currentY)
       this.doc.setTextColor(0, 0, 0)
       // Fix: Ensure value is always a string and never undefined
       const displayValue = value || '0'
@@ -394,21 +398,21 @@ export class PDFGenerator {
       this.doc.setFillColor(240, 240, 240)
       this.doc.roundedRect(x, this.currentY, boxWidth, 25, 3, 3, 'F')
       
-      // Fix: Ensure stat.value is defined and handle alignment properly
-      const value = stat.value || '0'
-      const labelText = stat.label || 'N/A'
+      // Fix: Ensure stat.value and stat.label are defined and handle alignment properly
+      const value = stat.value ?? '0'
+      const labelText = stat.label ?? 'N/A'
       
-      // Value - Fix: Provide proper default for alignment
+      // Value - Fix: Provide proper default for alignment and ensure centerX is a number
       this.doc.setFontSize(16)
       this.doc.setTextColor(37, 99, 235)
-      const textWidth = this.doc.getTextWidth(value)
+      const textWidth = this.doc.getTextWidth(value) ?? 0
       const centerX = x + boxWidth / 2 - textWidth / 2
       this.doc.text(value, centerX, this.currentY + 12)
       
-      // Label - Fix: Provide proper default for alignment
+      // Label - Fix: Provide proper default for alignment and ensure labelCenterX is a number
       this.doc.setFontSize(8)
       this.doc.setTextColor(100, 100, 100)
-      const labelWidth = this.doc.getTextWidth(labelText)
+      const labelWidth = this.doc.getTextWidth(labelText) ?? 0
       const labelCenterX = x + boxWidth / 2 - labelWidth / 2
       this.doc.text(labelText, labelCenterX, this.currentY + 20)
     })
@@ -441,13 +445,13 @@ export class PDFGenerator {
       this.doc.text('DepositDefender Report', this.margin, this.pageHeight - 8)
       
       // Fix: Ensure property.address is defined and handle alignment properly
-      const address = property.address || 'Property Address'
-      const addressWidth = this.doc.getTextWidth(address)
+      const address = property.address ?? 'Property Address'
+      const addressWidth = this.doc.getTextWidth(address) ?? 0
       const addressCenterX = this.pageWidth / 2 - addressWidth / 2
       this.doc.text(address, addressCenterX, this.pageHeight - 8)
       
       const pageText = `Page ${i} of ${totalPages}`
-      const pageTextWidth = this.doc.getTextWidth(pageText)
+      const pageTextWidth = this.doc.getTextWidth(pageText) ?? 0
       this.doc.text(pageText, this.pageWidth - this.margin - pageTextWidth, this.pageHeight - 8)
     }
   }
