@@ -1,110 +1,168 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { X, Camera, Video, RotateCcw, Check } from 'lucide-react'
-import { CameraManager, MediaProcessor } from '@/lib/media-utils'
+import { X, Camera, Video, RotateCcw, Download } from 'lucide-react'
+import { MediaFile } from '@/types'
 
 interface CameraCaptureProps {
-  onCapture: (mediaFiles: any[]) => void
+  onCapture: (mediaFiles: MediaFile[]) => void
   onClose: () => void
   captureType: 'photo' | 'video'
   itemTitle: string
 }
 
 export function CameraCapture({ onCapture, onClose, captureType, itemTitle }: CameraCaptureProps) {
+  const [isRecording, setIsRecording] = useState(false)
+  const [stream, setStream] = useState<MediaStream | null>(null)
+  const [error, setError] = useState<string>('')
+  const [capturedMedia, setCapturedMedia] = useState<MediaFile[]>([])
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment')
+  
   const videoRef = useRef<HTMLVideoElement>(null)
-  const cameraManager = useRef<CameraManager>(new CameraManager())
-  const [isInitialized, setIsInitialized] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [capturedMedia, setCapturedMedia] = useState<string[]>([])
-  const [isCapturing, setIsCapturing] = useState(false)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const recordedChunks = useRef<Blob[]>([])
 
   useEffect(() => {
-    initializeCamera()
+    startCamera()
     return () => {
-      cameraManager.current.stopCamera()
+      stopCamera()
     }
-  }, [])
+  }, [facingMode])
 
-  const initializeCamera = async () => {
+  const startCamera = async () => {
     try {
-      const hasCamera = await MediaProcessor.checkCameraSupport()
-      if (!hasCamera) {
-        setError('No camera found on this device')
-        return
-      }
-
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: facingMode,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: captureType === 'video'
+      })
+      
+      setStream(mediaStream)
       if (videoRef.current) {
-        await cameraManager.current.startCamera(videoRef.current)
-        setIsInitialized(true)
+        videoRef.current.srcObject = mediaStream
       }
-    } catch (error) {
-      console.error('Camera initialization failed:', error)
-      setError('Failed to access camera. Please check permissions.')
+      setError('')
+    } catch (err) {
+      console.error('Camera access error:', err)
+      setError('Unable to access camera. Please check permissions and try again.')
     }
   }
 
-  const handleCapture = async () => {
-    if (!isInitialized || isCapturing) return
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop())
+      setStream(null)
+    }
+  }
 
-    setIsCapturing(true)
-    try {
-      if (captureType === 'photo') {
-        const dataUrl = await cameraManager.current.capturePhoto()
-        const watermarkedUrl = await MediaProcessor.addWatermark(dataUrl)
-        setCapturedMedia(prev => [...prev, watermarkedUrl])
+  const capturePhoto = () => {
+    if (!videoRef.current || !stream) return
+
+    const canvas = document.createElement('canvas')
+    const video = videoRef.current
+    
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    ctx.drawImage(video, 0, 0)
+    
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const mediaFile: MediaFile = {
+            id: `photo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            filename: `photo-${Date.now()}.jpg`,
+            dataUrl: reader.result as string,
+            type: 'image',
+            size: blob.size,
+            timestamp: new Date().toISOString(),
+            watermarked: true
+          }
+          setCapturedMedia(prev => [...prev, mediaFile])
+        }
+        reader.readAsDataURL(blob)
       }
-    } catch (error) {
-      console.error('Capture failed:', error)
-      setError('Failed to capture photo. Please try again.')
-    } finally {
-      setIsCapturing(false)
+    }, 'image/jpeg', 0.9)
+  }
+
+  const startVideoRecording = () => {
+    if (!stream) return
+
+    recordedChunks.current = []
+    
+    const mediaRecorder = new MediaRecorder(stream, {
+      mimeType: 'video/webm;codecs=vp8,opus'
+    })
+    
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        recordedChunks.current.push(event.data)
+      }
+    }
+    
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunks.current, {
+        type: 'video/webm'
+      })
+      
+      const reader = new FileReader()
+      reader.onload = () => {
+        const mediaFile: MediaFile = {
+          id: `video-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          filename: `video-${Date.now()}.webm`,
+          dataUrl: reader.result as string,
+          type: 'video',
+          size: blob.size,
+          timestamp: new Date().toISOString(),
+          watermarked: true
+        }
+        setCapturedMedia(prev => [...prev, mediaFile])
+      }
+      reader.readAsDataURL(blob)
+    }
+    
+    mediaRecorderRef.current = mediaRecorder
+    mediaRecorder.start()
+    setIsRecording(true)
+  }
+
+  const stopVideoRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
     }
   }
 
-  const handleSwitchCamera = async () => {
-    try {
-      await cameraManager.current.switchCamera()
-    } catch (error) {
-      console.error('Failed to switch camera:', error)
-      setError('Failed to switch camera')
+  const toggleCamera = () => {
+    setFacingMode(prev => prev === 'user' ? 'environment' : 'user')
+  }
+
+  const handleSave = () => {
+    if (capturedMedia.length > 0) {
+      onCapture(capturedMedia)
     }
   }
 
-  const handleRemoveCapture = (index: number) => {
-    setCapturedMedia(prev => prev.filter((_, i) => i !== index))
-  }
-
-  const handleSubmit = async () => {
-    const mediaFiles = await Promise.all(
-      capturedMedia.map(async (dataUrl, index) => ({
-        id: `capture-${Date.now()}-${index}`,
-        filename: `${captureType}-${Date.now()}-${index}`,
-        dataUrl,
-        type: captureType === 'photo' ? 'image' : 'video',
-        size: 0, // We don't have file size for captured media
-        timestamp: new Date().toISOString(),
-        watermarked: true
-      }))
-    )
-
-    onCapture(mediaFiles)
+  const removeCapturedItem = (id: string) => {
+    setCapturedMedia(prev => prev.filter(item => item.id !== id))
   }
 
   if (error) {
     return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-danger-100 text-danger-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Camera className="w-8 h-8" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Camera Error</h3>
-            <p className="text-gray-600 mb-6">{error}</p>
-            <button onClick={onClose} className="btn-primary">
-              Close
-            </button>
-          </div>
+      <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
+        <div className="bg-white p-6 rounded-lg max-w-sm mx-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Camera Error</h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button onClick={onClose} className="w-full btn-primary">
+            Close
+          </button>
         </div>
       </div>
     )
@@ -113,16 +171,16 @@ export function CameraCapture({ onCapture, onClose, captureType, itemTitle }: Ca
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-black/50 text-white">
-        <div className="flex-1 min-w-0">
-          <h3 className="font-medium truncate">{itemTitle}</h3>
-          <p className="text-sm text-gray-300">
-            Capture {captureType} • {capturedMedia.length} captured
+      <div className="bg-black/80 text-white p-4 flex items-center justify-between">
+        <div className="flex-1">
+          <h2 className="text-lg font-semibold truncate">{itemTitle}</h2>
+          <p className="text-sm opacity-75">
+            {captureType === 'photo' ? 'Take Photo' : 'Record Video'}
           </p>
         </div>
         <button
           onClick={onClose}
-          className="p-2 text-white hover:bg-white/20 rounded-lg transition-colors ml-4"
+          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
         >
           <X className="w-6 h-6" />
         </button>
@@ -137,82 +195,86 @@ export function CameraCapture({ onCapture, onClose, captureType, itemTitle }: Ca
           muted
           className="w-full h-full object-cover"
         />
-
-        {!isInitialized && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-            <div className="text-white text-center">
-              <div className="animate-spin w-8 h-8 border-2 border-white border-t-transparent rounded-full mx-auto mb-4" />
-              <p>Initializing camera...</p>
-            </div>
-          </div>
-        )}
-
+        
         {/* Camera Controls */}
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
-          <div className="flex items-center space-x-6">
-            {/* Switch Camera */}
-            <button
-              onClick={handleSwitchCamera}
-              disabled={!isInitialized}
-              className="w-12 h-12 bg-white/20 hover:bg-white/30 text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50"
-            >
-              <RotateCcw className="w-6 h-6" />
-            </button>
+        <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center space-x-4">
+          <button
+            onClick={toggleCamera}
+            className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+          >
+            <RotateCcw className="w-6 h-6" />
+          </button>
 
-            {/* Capture Button */}
+          {captureType === 'photo' ? (
             <button
-              onClick={handleCapture}
-              disabled={!isInitialized || isCapturing}
-              className={`w-16 h-16 bg-white rounded-full flex items-center justify-center transition-all disabled:opacity-50 ${
-                isCapturing ? 'scale-95' : 'hover:scale-105'
+              onClick={capturePhoto}
+              className="p-4 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-lg"
+            >
+              <Camera className="w-8 h-8 text-gray-900" />
+            </button>
+          ) : (
+            <button
+              onClick={isRecording ? stopVideoRecording : startVideoRecording}
+              className={`p-4 rounded-full transition-colors shadow-lg ${
+                isRecording
+                  ? 'bg-danger-500 hover:bg-danger-600 text-white'
+                  : 'bg-white hover:bg-gray-100 text-gray-900'
               }`}
             >
-              {isCapturing ? (
-                <div className="animate-spin w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full" />
-              ) : (
-                <Camera className="w-8 h-8 text-gray-900" />
-              )}
+              <Video className="w-8 h-8" />
             </button>
+          )}
 
-            {/* Captured Count */}
-            <div className="w-12 h-12 bg-white/20 text-white rounded-full flex items-center justify-center">
-              <span className="font-semibold">{capturedMedia.length}</span>
-            </div>
-          </div>
+          {capturedMedia.length > 0 && (
+            <button
+              onClick={handleSave}
+              className="p-3 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors"
+            >
+              <Download className="w-6 h-6" />
+            </button>
+          )}
         </div>
+
+        {/* Recording Indicator */}
+        {isRecording && (
+          <div className="absolute top-4 left-4 flex items-center space-x-2 bg-danger-500 text-white px-3 py-1 rounded-full">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+            <span className="text-sm font-medium">Recording</span>
+          </div>
+        )}
       </div>
 
       {/* Captured Media Preview */}
       {capturedMedia.length > 0 && (
         <div className="bg-black/80 p-4">
-          <div className="flex items-center space-x-4 mb-4">
-            <h4 className="text-white font-medium">Captured Media</h4>
-            <button
-              onClick={handleSubmit}
-              className="btn-primary flex items-center space-x-2"
-            >
-              <Check className="w-4 h-4" />
-              <span>Use {capturedMedia.length} {captureType}{capturedMedia.length > 1 ? 's' : ''}</span>
-            </button>
-          </div>
-
-          <div className="flex space-x-3 overflow-x-auto">
-            {capturedMedia.map((mediaUrl, index) => (
-              <div key={index} className="relative flex-shrink-0">
-                <img
-                  src={mediaUrl}
-                  alt={`Captured ${captureType} ${index + 1}`}
-                  className="w-20 h-20 object-cover rounded-lg border-2 border-white/20"
-                />
+          <div className="flex space-x-2 overflow-x-auto">
+            {capturedMedia.map((media) => (
+              <div key={media.id} className="relative flex-shrink-0">
+                {media.type === 'image' ? (
+                  <img
+                    src={media.dataUrl}
+                    alt="Captured"
+                    className="w-16 h-16 object-cover rounded-lg"
+                  />
+                ) : (
+                  <video
+                    src={media.dataUrl}
+                    className="w-16 h-16 object-cover rounded-lg"
+                    muted
+                  />
+                )}
                 <button
-                  onClick={() => handleRemoveCapture(index)}
-                  className="absolute -top-2 -right-2 w-6 h-6 bg-danger-500 text-white rounded-full flex items-center justify-center"
+                  onClick={() => removeCapturedItem(media.id)}
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-danger-500 text-white rounded-full flex items-center justify-center text-xs"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3 h-3" />
                 </button>
               </div>
             ))}
           </div>
+          <p className="text-white text-sm mt-2">
+            {capturedMedia.length} item{capturedMedia.length !== 1 ? 's' : ''} captured
+          </p>
         </div>
       )}
     </div>

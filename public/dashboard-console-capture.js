@@ -1,11 +1,9 @@
-(function() {
-  // Only run if in iframe (dashboard preview)
+(function () {
   if (window.self === window.top) return;
-  
+
   const logs = [];
   const MAX_LOGS = 500;
-  
-  // Store original console methods
+
   const originalConsole = {
     log: console.log,
     warn: console.warn,
@@ -13,7 +11,7 @@
     info: console.info,
     debug: console.debug
   };
-  
+
   function captureLog(level, args) {
     const timestamp = new Date().toISOString();
     const message = args.map(arg => {
@@ -30,51 +28,42 @@
       }
       return String(arg);
     }).join(' ');
-    
+
     const logEntry = {
       timestamp,
       level,
       message,
       url: window.location.href
     };
-    
+
     logs.push(logEntry);
     if (logs.length > MAX_LOGS) {
       logs.shift();
     }
-    
-    // Send to parent dashboard
+
     try {
       window.parent.postMessage({
         type: 'console-log',
         log: logEntry
       }, '*');
-    } catch (e) {
-      // Silent fail if postMessage not available
-    }
+    } catch (e) {}
   }
-  
-  // Override console methods
-  ['log', 'warn', 'error', 'info', 'debug'].forEach(method => {
-    console[method] = function(...args) {
-      // Call original method
-      originalConsole[method].apply(console, args);
-      // Capture for dashboard
-      captureLog(method, args);
+
+  ['log', 'warn', 'error', 'info', 'debug'].forEach(level => {
+    console[level] = function(...args) {
+      originalConsole[level].apply(console, args);
+      captureLog(level, args);
     };
   });
-  
-  // Capture unhandled errors
-  window.addEventListener('error', function(event) {
-    captureLog('error', [`Uncaught Error: ${event.error ? event.error.stack || event.error : event.message}`]);
+
+  window.addEventListener('error', (event) => {
+    captureLog('error', [event.message, event.filename, event.lineno, event.colno]);
   });
-  
-  // Capture unhandled promise rejections
-  window.addEventListener('unhandledrejection', function(event) {
-    captureLog('error', [`Unhandled Promise Rejection: ${event.reason}`]);
+
+  window.addEventListener('unhandledrejection', (event) => {
+    captureLog('error', ['Unhandled Promise Rejection:', event.reason]);
   });
-  
-  // Send ready message to dashboard
+
   function sendReady() {
     try {
       window.parent.postMessage({
@@ -82,12 +71,9 @@
         url: window.location.href,
         timestamp: new Date().toISOString()
       }, '*');
-    } catch (e) {
-      // Silent fail
-    }
+    } catch (e) {}
   }
-  
-  // Send route change message
+
   function sendRouteChange() {
     try {
       window.parent.postMessage({
@@ -100,29 +86,9 @@
         },
         timestamp: new Date().toISOString()
       }, '*');
-    } catch (e) {
-      // Silent fail
-    }
+    } catch (e) {}
   }
-  
-  // Monitor route changes for SPA navigation
-  const originalPushState = history.pushState;
-  const originalReplaceState = history.replaceState;
-  
-  history.pushState = function(...args) {
-    originalPushState.apply(history, args);
-    setTimeout(sendRouteChange, 0);
-  };
-  
-  history.replaceState = function(...args) {
-    originalReplaceState.apply(history, args);
-    setTimeout(sendRouteChange, 0);
-  };
-  
-  window.addEventListener('popstate', sendRouteChange);
-  window.addEventListener('hashchange', sendRouteChange);
-  
-  // Send ready message when loaded
+
   if (document.readyState === 'complete') {
     sendReady();
     sendRouteChange();
@@ -132,4 +98,29 @@
       sendRouteChange();
     });
   }
+
+  let lastUrl = location.href;
+  new MutationObserver(() => {
+    const url = location.href;
+    if (url !== lastUrl) {
+      lastUrl = url;
+      sendRouteChange();
+    }
+  }).observe(document, { subtree: true, childList: true });
+
+  const originalPushState = history.pushState;
+  const originalReplaceState = history.replaceState;
+
+  history.pushState = function(...args) {
+    originalPushState.apply(this, args);
+    setTimeout(sendRouteChange, 0);
+  };
+
+  history.replaceState = function(...args) {
+    originalReplaceState.apply(this, args);
+    setTimeout(sendRouteChange, 0);
+  };
+
+  window.addEventListener('popstate', sendRouteChange);
+  window.addEventListener('hashchange', sendRouteChange);
 })();
