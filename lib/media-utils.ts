@@ -233,7 +233,9 @@ export class CameraManager {
   async switchCamera(): Promise<void> {
     if (!this.video) return
     
-    const currentFacingMode = this.stream?.getVideoTracks()[0].getSettings().facingMode
+    // Fix: Add optional chaining and explicit undefined check
+    const currentTrack = this.stream?.getVideoTracks()[0]
+    const currentFacingMode = currentTrack?.getSettings().facingMode
     const newFacingMode = currentFacingMode === 'user' ? 'environment' : 'user'
     
     this.stopCamera()

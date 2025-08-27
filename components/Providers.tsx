@@ -138,10 +138,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
     setNotifications(prev => [...prev, newNotification])
 
     // Auto-remove notification after duration (unless duration is 0 for persistent)
-    if (newNotification.duration > 0) {
+    // Fix: Add explicit check for duration being defined and greater than 0
+    const duration = newNotification.duration
+    if (duration && duration > 0) {
       setTimeout(() => {
         removeNotification(id)
-      }, newNotification.duration)
+      }, duration)
     }
   }
 

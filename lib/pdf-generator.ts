@@ -103,7 +103,8 @@ export class PDFGenerator {
       this.doc.setTextColor(100, 100, 100)
       this.doc.text(label, this.margin, this.currentY)
       this.doc.setTextColor(0, 0, 0)
-      this.doc.text(value, this.margin + 35, this.currentY)
+      // Fix: Ensure value is always a string
+      this.doc.text(value || '', this.margin + 35, this.currentY)
       this.currentY += 6
     })
   }
@@ -134,7 +135,8 @@ export class PDFGenerator {
       this.doc.setTextColor(100, 100, 100)
       this.doc.text(label, this.margin, this.currentY)
       this.doc.setTextColor(0, 0, 0)
-      this.doc.text(value, this.margin + 40, this.currentY)
+      // Fix: Ensure value is always a string
+      this.doc.text(value || '', this.margin + 40, this.currentY)
       this.currentY += 6
     })
     
@@ -187,7 +189,11 @@ export class PDFGenerator {
     // Room progress
     this.doc.setFontSize(10)
     this.doc.setTextColor(100, 100, 100)
-    this.doc.text(`Progress: ${Math.round(room.progressPercentage)}% (${room.completedItems}/${room.totalItems})`, this.margin, this.currentY)
+    // Fix: Add explicit undefined check and default to 0
+    const progressPercentage = room.progressPercentage ?? 0
+    const completedItems = room.completedItems ?? 0
+    const totalItems = room.totalItems ?? 0
+    this.doc.text(`Progress: ${Math.round(progressPercentage)}% (${completedItems}/${totalItems})`, this.margin, this.currentY)
     this.currentY += 10
     
     // Group items by category
