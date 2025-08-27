@@ -398,15 +398,19 @@ export class PDFGenerator {
       const value = stat.value || '0'
       const labelText = stat.label || 'N/A'
       
-      // Value - Fix: Remove 'as any' and use proper alignment options
+      // Value - Fix: Provide proper default for alignment
       this.doc.setFontSize(16)
       this.doc.setTextColor(37, 99, 235)
-      this.doc.text(value, x + boxWidth/2, this.currentY + 12, { align: 'center' })
+      const textWidth = this.doc.getTextWidth(value)
+      const centerX = x + boxWidth / 2 - textWidth / 2
+      this.doc.text(value, centerX, this.currentY + 12)
       
-      // Label - Fix: Remove 'as any' and use proper alignment options
+      // Label - Fix: Provide proper default for alignment
       this.doc.setFontSize(8)
       this.doc.setTextColor(100, 100, 100)
-      this.doc.text(labelText, x + boxWidth/2, this.currentY + 20, { align: 'center' })
+      const labelWidth = this.doc.getTextWidth(labelText)
+      const labelCenterX = x + boxWidth / 2 - labelWidth / 2
+      this.doc.text(labelText, labelCenterX, this.currentY + 20)
     })
   }
 
@@ -438,8 +442,13 @@ export class PDFGenerator {
       
       // Fix: Ensure property.address is defined and handle alignment properly
       const address = property.address || 'Property Address'
-      this.doc.text(address, this.pageWidth / 2, this.pageHeight - 8, { align: 'center' })
-      this.doc.text(`Page ${i} of ${totalPages}`, this.pageWidth - this.margin, this.pageHeight - 8, { align: 'right' })
+      const addressWidth = this.doc.getTextWidth(address)
+      const addressCenterX = this.pageWidth / 2 - addressWidth / 2
+      this.doc.text(address, addressCenterX, this.pageHeight - 8)
+      
+      const pageText = `Page ${i} of ${totalPages}`
+      const pageTextWidth = this.doc.getTextWidth(pageText)
+      this.doc.text(pageText, this.pageWidth - this.margin - pageTextWidth, this.pageHeight - 8)
     }
   }
 }
