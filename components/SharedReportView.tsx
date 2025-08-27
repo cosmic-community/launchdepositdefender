@@ -91,7 +91,10 @@ export function SharedReportView({ shareId }: SharedReportViewProps) {
       sum + room.items.reduce((photoSum, item) => photoSum + item.photos.length, 0), 0)
   }
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) {
+      return 'Not set'
+    }
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -245,7 +248,7 @@ export function SharedReportView({ shareId }: SharedReportViewProps) {
               <h3 className="font-semibold text-gray-900 mb-2">Security Information</h3>
               <div className="text-sm text-gray-600 space-y-1">
                 <p>• This shared link expires on {new Date(report.expiresAt).toLocaleDateString()}</p>
-                <p>• Report generated on {new Date(reportData.generatedAt).toLocaleDateString()}</p>
+                <p>• Report generated on {new Date(reportData.generatedAt || Date.now()).toLocaleDateString()}</p>
                 <p>• All photos include timestamps and watermarks for authenticity</p>
                 <p>• Access to this report is logged for security purposes</p>
               </div>

@@ -42,7 +42,10 @@ export async function generatePDF(property: Property, options: PDFOptions): Prom
   yPosition += 6
   pdf.text(`Tenant: ${property.tenantName}`, margin, yPosition)
   yPosition += 6
-  pdf.text(`Move-out Date: ${new Date(property.moveOutDate).toLocaleDateString()}`, margin, yPosition)
+  
+  // Safe date handling with fallback
+  const moveOutDate = property.moveOutDate ? new Date(property.moveOutDate).toLocaleDateString() : 'Not specified'
+  pdf.text(`Move-out Date: ${moveOutDate}`, margin, yPosition)
   yPosition += 6
 
   if (property.landlordName) {

@@ -56,7 +56,10 @@ export function PropertyInspection({ propertyId }: PropertyInspectionProps) {
   const totalIssues = property.rooms.reduce((sum, room) => 
     sum + room.items.filter(item => item.severity && item.completed).length, 0)
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) {
+      return 'Not set'
+    }
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',

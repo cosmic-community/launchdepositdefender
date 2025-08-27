@@ -40,7 +40,10 @@ export function PropertyCard({ property }: PropertyCardProps) {
     }
   }
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) {
+      return 'Not set'
+    }
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -187,7 +190,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
           <span>Created {formatDate(property.createdAt)}</span>
           <span>
             Last updated {property.rooms.length > 0 
-              ? formatDate(Math.max(...property.rooms.map(r => new Date(r.lastModified).getTime())).toString())
+              ? formatDate(Math.max(...property.rooms.map(r => new Date(r.lastModified || Date.now()).getTime())).toString())
               : 'Never'
             }
           </span>
