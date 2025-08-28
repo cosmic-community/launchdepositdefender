@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, FileText, Home, CheckCircle2, Clock, AlertCircle } from 'lucide-react'
+import { ArrowLeft, FileText, Home, CheckCircle2, Clock, AlertCircle, Plus } from 'lucide-react'
 import { useApp } from '@/components/Providers'
-import { Property } from '@/types'
+import { Property, Room } from '@/types'
 import { RoomCard } from '@/components/RoomCard'
 import { ReportGenerator } from '@/components/ReportGenerator'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { AddRoomModal } from '@/components/AddRoomModal'
 
 interface PropertyInspectionProps {
   propertyId: string
@@ -15,9 +16,10 @@ interface PropertyInspectionProps {
 
 export function PropertyInspection({ propertyId }: PropertyInspectionProps) {
   const router = useRouter()
-  const { properties, isLoading: appLoading } = useApp()
+  const { properties, updateProperty, isLoading: appLoading } = useApp()
   const [property, setProperty] = useState<Property | null>(null)
   const [showReportGenerator, setShowReportGenerator] = useState(false)
+  const [showAddRoom, setShowAddRoom] = useState(false)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
@@ -65,6 +67,26 @@ export function PropertyInspection({ propertyId }: PropertyInspectionProps) {
       }
     }
   }, [properties, property])
+
+  const handleAddRoom = (newRoom: Room) => {
+    if (!property) return
+
+    // Calculate overall progress with the new room
+    const updatedRooms = [...property.rooms, newRoom]
+    const totalItems = updatedRooms.reduce((sum, r) => sum + r.totalItems, 0)
+    const totalCompleted = updatedRooms.reduce((sum, r) => sum + r.completedItems, 0)
+    const overallProgress = totalItems > 0 ? (totalCompleted / totalItems) * 100 : 0
+
+    const updatedProperty = {
+      ...property,
+      rooms: updatedRooms,
+      overallProgress
+    }
+
+    setProperty(updatedProperty)
+    updateProperty(updatedProperty)
+    setShowAddRoom(false)
+  }
 
   // Show loading while app is still loading or while we're checking for property
   if (loading || appLoading) {
@@ -227,12 +249,23 @@ export function PropertyInspection({ propertyId }: PropertyInspectionProps) {
       {/* Rooms Grid */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Room Inspections
-          </h2>
-          <p className="text-gray-600">
-            Complete each room inspection by following the guided checklists
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                Room Inspections
+              </h2>
+              <p className="text-gray-600">
+                Complete each room inspection by following the guided checklists
+              </p>
+            </div>
+            <button
+              onClick={() => setShowAddRoom(true)}
+              className="btn-primary flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Room</span>
+            </button>
+          </div>
         </div>
 
         {property.rooms.length > 0 ? (
@@ -252,13 +285,14 @@ export function PropertyInspection({ propertyId }: PropertyInspectionProps) {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Rooms Yet</h3>
             <p className="text-gray-600 mb-4">
-              This property doesn't have any rooms set up for inspection yet.
+              Get started by adding your first room for inspection.
             </p>
             <button
-              onClick={() => router.push('/')}
-              className="btn-primary"
+              onClick={() => setShowAddRoom(true)}
+              className="btn-primary flex items-center space-x-2"
             >
-              Back to Dashboard
+              <Plus className="w-4 h-4" />
+              <span>Add Your First Room</span>
             </button>
           </div>
         )}
@@ -281,6 +315,7 @@ export function PropertyInspection({ propertyId }: PropertyInspectionProps) {
                     <li>• Add detailed notes to provide context for each issue</li>
                     <li>• Complete all rooms before generating your final report</li>
                     <li>• Your data is saved automatically as you work</li>
+                    <li>• Add additional rooms anytime using the "Add Room" button</li>
                   </ul>
                 </div>
               </div>
@@ -294,6 +329,16 @@ export function PropertyInspection({ propertyId }: PropertyInspectionProps) {
         <ReportGenerator
           property={property}
           onClose={() => setShowReportGenerator(false)}
+        />
+      )}
+
+      {/* Add Room Modal */}
+      {showAddRoom && (
+        <AddRoomModal
+          isOpen={showAddRoom}
+          onClose={() => setShowAddRoom(false)}
+          onAddRoom={handleAddRoom}
+          existingRoomNames={property.rooms.map(room => room.name)}
         />
       )}
     </div>
